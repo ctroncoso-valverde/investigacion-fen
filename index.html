@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagnóstico Producción Académica — FEN UNAB</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fafaf8;--surface:#fff;--text:#1a1a1a;--text2:#555;--text3:#999;--border:#e0ddd5;--border2:#ccc;--gold:#C8A951}
+@media(prefers-color-scheme:dark){:root{--bg:#1a1a1a;--surface:#242424;--text:#e8e8e8;--text2:#aaa;--text3:#666;--border:#333;--border2:#444;--gold:#D4B45A}}
+body{font-family:-apple-system,system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+
+/* ── AUTH SCREEN ── */
+#auth-gate{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+#auth-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2.5rem;max-width:380px;width:100%;text-align:center}
+#auth-box h2{font-size:1.1rem;font-weight:600;margin-bottom:.25rem}
+#auth-box .sub{font-size:.82rem;color:var(--text2);margin-bottom:1.5rem}
+#auth-box input{width:100%;padding:10px 14px;font-size:1rem;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);text-align:center;letter-spacing:.05em;outline:none;transition:border .15s}
+#auth-box input:focus{border-color:var(--gold)}
+#auth-box button{width:100%;padding:10px;margin-top:12px;font-size:.9rem;font-weight:500;border:none;border-radius:8px;background:var(--text);color:var(--bg);cursor:pointer;transition:opacity .15s}
+#auth-box button:hover{opacity:.85}
+#auth-error{color:#c0392b;font-size:.8rem;margin-top:10px;min-height:1.2em}
+#auth-box .lock{font-size:2rem;margin-bottom:1rem;opacity:.3}
+
+/* ── DASHBOARD (hidden until auth) ── */
+#dashboard{display:none}
+.wrap{max-width:1100px;margin:0 auto;padding:2rem 1.5rem}
+h1{font-size:1.6rem;font-weight:600;margin-bottom:.25rem}
+.subtitle{font-size:.85rem;color:var(--text2);margin-bottom:1.5rem}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab{padding:.6rem 1.2rem;font-size:.85rem;cursor:pointer;border:none;background:none;color:var(--text2);border-bottom:2px solid transparent;font-weight:500;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--text);border-bottom-color:var(--gold)}
+.panel{display:none}
+.panel.active{display:block}
+.chart-wrap{position:relative;width:100%;height:480px;margin-bottom:1rem}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:.8rem;color:var(--text2);margin-bottom:12px}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend .dot{width:11px;height:11px;border-radius:50%}
+.legend .sq{width:11px;height:11px;border-radius:2px;border:2px solid var(--gold);background:transparent}
+#tip{display:none;position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:10px 14px;font-size:.8rem;pointer-events:none;z-index:100;max-width:240px;line-height:1.6;color:var(--text2);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+#tip b{color:var(--text)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.fbtn{padding:5px 14px;font-size:.78rem;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .15s;font-weight:500}
+.fbtn:hover{border-color:var(--border2);color:var(--text)}
+.fbtn.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--border);font-weight:600;color:var(--text2);font-size:.75rem;text-transform:uppercase;letter-spacing:.03em;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{color:var(--text)}
+th .arrow{font-size:.65rem;margin-left:3px;opacity:.4}
+th.sorted .arrow{opacity:1}
+td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:rgba(128,128,128,.05)}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.7rem;font-weight:600}
+.b-econ{background:#e6f1fb;color:#185fa5}
+.b-adm{background:#fbeaf0;color:#993556}
+.b-con{background:#e1f5ee;color:#0f6e56}
+.b-mkt{background:#faece7;color:#993c1d}
+@media(prefers-color-scheme:dark){.b-econ{background:#0c447c;color:#b5d4f4}.b-adm{background:#72243e;color:#f4c0d1}.b-con{background:#085041;color:#9fe1cb}.b-mkt{background:#712b13;color:#f5c4b3}}
+.ideal-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--gold);margin-right:4px}
+.bar-bg{background:var(--border);border-radius:3px;height:6px;width:80px;display:inline-block;vertical-align:middle;margin-left:6px}
+.bar-fg{height:6px;border-radius:3px;display:block}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:1.5rem}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi .label{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.kpi .val{font-size:1.5rem;font-weight:600}
+.kpi .sub{font-size:.75rem;color:var(--text2);margin-top:2px}
+.note{font-size:.73rem;color:var(--text3);margin-top:1rem;line-height:1.5}
+.credit{font-size:.7rem;color:var(--text3);border-top:1px solid var(--border);margin-top:2.5rem;padding-top:1rem;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- AUTH GATE                                    -->
+<!-- ════════════════════════════════════════════ -->
+<div id="auth-gate">
+  <div id="auth-box">
+    <div class="lock">&#9919;</div>
+    <h2>Acceso restringido</h2>
+    <p class="sub">Diagnostico de produccion academica — FEN UNAB<br>Ingrese su RUT para continuar</p>
+    <input type="text" id="rut-input" placeholder="12345678-9" maxlength="12" autocomplete="off" spellcheck="false">
+    <button id="rut-btn">Ingresar</button>
+    <div id="auth-error"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- DASHBOARD (hidden until authenticated)       -->
+<!-- ════════════════════════════════════════════ -->
+<div id="dashboard">
+<div class="wrap">
+
+<h1>Diagnostico de produccion academica — FEN UNAB</h1>
+<p class="subtitle">Periodo 2020-2026 · 49 academicos activos · 243 papers · Proceso iSER AACSB · Uso interno</p>
+
+<div class="kpi-row">
+  <div class="kpi"><div class="label">Papers totales</div><div class="val">243</div><div class="sub">49 academicos</div></div>
+  <div class="kpi"><div class="label">Alto impacto</div><div class="val" style="color:var(--gold)">36</div><div class="sub">14,8% del total</div></div>
+  <div class="kpi"><div class="label">En ABS Business</div><div class="val">96</div><div class="sub">39,5% del total</div></div>
+  <div class="kpi"><div class="label">Predatorias</div><div class="val" style="color:#c0392b">29</div><div class="sub">11,9% del total</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showPanel(0)">Matriz ABS x IF</button>
+  <button class="tab" onclick="showPanel(1)">Tabla academicos</button>
+  <button class="tab" onclick="showPanel(2)">Por disciplina</button>
+</div>
+
+<div class="panel active" id="p0">
+<p class="subtitle" style="margin-bottom:8px">Cada burbuja = 1 profesor. Tamano = n papers. Borde dorado = tiene papers de alto impacto (ABS 3+ y JCR Q1/Q2).</p>
+<div class="legend">
+  <span><span class="dot" style="background:#3266ad"></span>ECON_GP</span>
+  <span><span class="dot" style="background:#d4537e"></span>ADM_NI_INN</span>
+  <span><span class="dot" style="background:#1d9e75"></span>CON_FIN_TRI</span>
+  <span><span class="dot" style="background:#d85a30"></span>AD_MKT_TUR</span>
+  <span><span class="sq"></span>Con alto impacto</span>
+</div>
+<div class="filters" id="discFilter"></div>
+<div class="chart-wrap"><canvas id="ch"></canvas></div>
+<p class="note">Criterio alto impacto: ABS >= 3 (AJG 2024) AND Q1/Q2 JCR (Clarivate). Ambas condiciones simultaneas. Los academicos sin produccion WOS/Scopus no aparecen graficados.</p>
+</div>
+
+<div class="panel" id="p1">
+<div class="filters" id="discFilter2"></div>
+<div style="overflow-x:auto">
+<table id="profTable">
+<thead>
+<tr>
+  <th data-col="name">Nombre <span class="arrow">&#9650;</span></th>
+  <th data-col="disc">Disciplina <span class="arrow">&#9650;</span></th>
+  <th data-col="n">Papers <span class="arrow">&#9650;</span></th>
+  <th data-col="ideal">Alto imp. <span class="arrow">&#9650;</span></th>
+  <th data-col="abs">Mejor ABS <span class="arrow">&#9650;</span></th>
+  <th data-col="q">Mejor IF <span class="arrow">&#9650;</span></th>
+  <th data-col="pctIdeal">% Efic. <span class="arrow">&#9650;</span></th>
+  <th data-col="subdis">Sub-disciplina <span class="arrow">&#9650;</span></th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
+</div>
+
+<div class="panel" id="p2">
+<div class="chart-wrap" style="height:340px"><canvas id="ch2"></canvas></div>
+<div class="chart-wrap" style="height:340px;margin-top:1.5rem"><canvas id="ch3"></canvas></div>
+</div>
+
+<div id="tip"></div>
+<div class="credit">Diagnostico de Produccion Academica FEN UNAB 2020-2026 — Direccion Academica de Aseguramiento de la Calidad — Datos verificados a marzo 2026</div>
+</div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   AUTH — SHA-256 hash comparison
+   ══════════════════════════════════════════════ */
+var ALLOWED_HASHES = [
+  "380e276f854bb628eeed17c8487018c9446095a12655c774d3c1bf44066a15b1",
+  "15ea4f41f86087771bb8b2db646913c23cfefb16400adcb6f0f5de4168544b07"
+];
+
+async function sha256(text) {
+  var data = new TextEncoder().encode(text);
+  var buf = await crypto.subtle.digest('SHA-256', data);
+  var arr = Array.from(new Uint8Array(buf));
+  return arr.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+function normalizeRut(raw) {
+  var clean = raw.replace(/\./g, '').replace(/\s/g, '').trim();
+  if (clean.indexOf('-') === -1 && clean.length > 1) {
+    clean = clean.slice(0, -1) + '-' + clean.slice(-1);
+  }
+  return clean.toLowerCase();
+}
+
+async function tryAuth() {
+  var raw = document.getElementById('rut-input').value;
+  var rut = normalizeRut(raw);
+  if (rut.length < 3) {
+    document.getElementById('auth-error').textContent = 'Ingrese un RUT valido (ej: 12345678-9)';
+    return;
+  }
+  var hash = await sha256(rut);
+  if (ALLOWED_HASHES.indexOf(hash) !== -1) {
+    sessionStorage.setItem('fen_auth', 'ok');
+    showDashboard();
+  } else {
+    document.getElementById('auth-error').textContent = 'RUT no autorizado';
+    document.getElementById('rut-input').value = '';
+    document.getElementById('rut-input').focus();
+  }
+}
+
+function showDashboard() {
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  initDashboard();
+}
+
+document.getElementById('rut-btn').addEventListener('click', tryAuth);
+document.getElementById('rut-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') tryAuth();
+});
+
+if (sessionStorage.getItem('fen_auth') === 'ok') {
+  showDashboard();
+} else {
+  document.getElementById('rut-input').focus();
+}
+
+/* ══════════════════════════════════════════════
+   DASHBOARD
+   ══════════════════════════════════════════════ */
+var COLORS = {ECON_GP:'#3266ad', ADM_NI_INN:'#d4537e', CON_FIN_TRI:'#1d9e75', AD_MKT_TUR:'#d85a30'};
+var DISC_LABELS = {ECON_GP:'Economia y Ger. Publica', ADM_NI_INN:'Adm., NI e Innovacion', CON_FIN_TRI:'Finanzas, Cont. y Trib.', AD_MKT_TUR:'Analitica, Mkt y Turismo'};
+var absL = ['Fuera ABS','ABS 1','ABS 2','ABS 3','ABS 4','ABS 4\u2605'];
+var qL = ['\u2014','Q4','Q3','Q2','Q1'];
+
+var DATA = [
+["O. Bamieh","ECON_GP",8,6,4,4,"Labour Economics"],
+["P. Aroca","ECON_GP",11,2,3,4,"Development & Regional Econ."],
+["P. Gonzalez S.","ECON_GP",5,2,4,4,"Labour Economics"],
+["B. Villena","ECON_GP",4,2,3,4,"Labour Economics"],
+["J. Rojas","ECON_GP",14,1,3,4,"Management Education & HE"],
+["B. Lara","ECON_GP",5,1,4,4,"Behavioural & Welfare Econ."],
+["F. Balmaceda","ECON_GP",4,1,4,4,"Industrial Organization"],
+["C. Guadalupi","ECON_GP",3,1,4,3,"Industrial Organization"],
+["B. Orellana","ECON_GP",3,1,3,4,"Labour Economics"],
+["J.L. Correa","ECON_GP",2,1,3,3,"Development & Natural Res."],
+["J.P. Eberhard","ECON_GP",2,1,3,4,"Labour Economics"],
+["C. Troncoso","ECON_GP",2,1,4,4,"Industrial Organization"],
+["T. Guanziroli","ECON_GP",1,1,3,3,"Industrial Organization"],
+["G. Escobar","ECON_GP",6,0,1,4,"Industrial Organization"],
+["N. Garrido","ECON_GP",5,0,2,4,"Tourism & Hospitality"],
+["D. Vasquez","ECON_GP",3,0,2,4,"Public Economics & Policy"],
+["R. Bruna","ECON_GP",2,0,0,3,"Public Economics & Policy"],
+["R. Munita","ECON_GP",2,0,0,3,"Public Economics & Policy"],
+["C. Aceituno","ECON_GP",1,0,0,1,"\u2014"],
+["J.G. Diaz G.","ECON_GP",1,0,0,3,"Public Economics & Policy"],
+["J. Guzman","ECON_GP",1,0,1,4,"Labour Economics"],
+["R. Jalon","ECON_GP",1,0,0,4,"Development & Natural Res."],
+["P. Labra","ECON_GP",1,0,0,4,"Education Economics"],
+["J.L. Lima","ECON_GP",1,0,1,4,"Public Economics & Policy"],
+["J.P. Torres C.","ADM_NI_INN",11,2,3,4,"Entrepreneurship & Innovation"],
+["J. Unanue","ADM_NI_INN",11,1,3,4,"OB & HRM"],
+["F. Coronado","ADM_NI_INN",6,1,3,4,"Entrepreneurship & Innovation"],
+["J. Juyumaya","ADM_NI_INN",16,0,1,4,"Strategy & Management"],
+["L.F. Vergara","ADM_NI_INN",11,0,1,4,"Strategy & Management"],
+["J. Atkinson","ADM_NI_INN",10,0,0,4,"Strategy & Management"],
+["C.J. Alsua","ADM_NI_INN",8,0,1,3,"Social Impact & Public Pol."],
+["R. Ternero","ADM_NI_INN",8,0,0,4,"Technology & Data Science"],
+["E. Acuna","ADM_NI_INN",6,0,1,4,"Social Impact & Public Pol."],
+["E. Barrueto","ADM_NI_INN",5,0,1,4,"Strategy & Management"],
+["A. Rubio","ADM_NI_INN",4,0,1,3,"Strategy & Management"],
+["F. Flen","ADM_NI_INN",3,0,0,3,"Strategy & Management"],
+["V. Voitova","ADM_NI_INN",1,0,0,2,"Strategy & Management"],
+["R. Ormeno","CON_FIN_TRI",4,4,3,4,"Accounting & Auditing"],
+["B. Pasten","CON_FIN_TRI",9,3,3,4,"Financial Markets & Risk"],
+["J. Sabat","CON_FIN_TRI",4,1,5,4,"Financial Markets & Risk"],
+["J. Navarrete","CON_FIN_TRI",8,0,1,4,"Financial Markets & Risk"],
+["R. del Valle","CON_FIN_TRI",4,0,0,3,"Financial Markets & Risk"],
+["O. Palma","CON_FIN_TRI",3,0,0,3,"Financial Markets & Risk"],
+["R. Blanch","CON_FIN_TRI",2,0,0,3,"Financial Markets & Risk"],
+["R. Carvajal","CON_FIN_TRI",2,0,1,3,"Financial Markets & Risk"],
+["C. Giorgi","CON_FIN_TRI",1,0,0,2,"Financial Markets & Risk"],
+["M-A. Cooper","AD_MKT_TUR",11,3,4,4,"Tourism & Hospitality"],
+["I. Gutierrez","AD_MKT_TUR",5,0,2,4,"Data Analytics & Methods"],
+["J. Morales","AD_MKT_TUR",2,0,0,3,"Mgmt Education & HE"]
+];
+
+var profs = DATA.map(function(r) {
+  return {name:r[0], disc:r[1], n:r[2], ideal:r[3], abs:r[4], q:r[5], subdis:r[6], pctIdeal: r[2]>0 ? Math.round(r[3]/r[2]*100) : 0};
+});
+
+var activeDiscs = new Set(Object.keys(COLORS));
+var sortCol = 'ideal';
+var sortDir = -1;
+var chart1 = null;
+
+function showPanel(i) {
+  document.querySelectorAll('.tab').forEach(function(t,j) { t.classList.toggle('active', j===i); });
+  document.querySelectorAll('.panel').forEach(function(p,j) { p.classList.toggle('active', j===i); });
+  if (i===2 && !window._ch2Done) { buildDisciplineCharts(); window._ch2Done = true; }
+}
+
+function buildFilters(containerId, onChange) {
+  var c = document.getElementById(containerId);
+  c.innerHTML = '<button class="fbtn on" data-d="ALL">Todas</button>';
+  var keys = Object.keys(DISC_LABELS);
+  for (var k = 0; k < keys.length; k++) {
+    var di = keys[k];
+    c.innerHTML += '<button class="fbtn on" data-d="' + di + '" style="border-color:' + COLORS[di] + '">' + DISC_LABELS[di] + '</button>';
+  }
+  c.querySelectorAll('.fbtn').forEach(function(b) {
+    b.addEventListener('click', function() {
+      var d = b.dataset.d;
+      if (d === 'ALL') {
+        activeDiscs = new Set(Object.keys(COLORS));
+        c.querySelectorAll('.fbtn').forEach(function(x) { x.classList.add('on'); });
+      } else {
+        if (activeDiscs.size === 4) {
+          activeDiscs = new Set([d]);
+          c.querySelectorAll('.fbtn').forEach(function(x) { x.classList.toggle('on', x.dataset.d === d); });
+          c.querySelector('[data-d="ALL"]').classList.remove('on');
+        } else if (activeDiscs.has(d)) {
+          activeDiscs.delete(d); b.classList.remove('on');
+        } else {
+          activeDiscs.add(d); b.classList.add('on');
+        }
+        if (activeDiscs.size === 4) c.querySelector('[data-d="ALL"]').classList.add('on');
+        else c.querySelector('[data-d="ALL"]').classList.remove('on');
+      }
+      onChange();
+    });
+  });
+}
+
+function jitter(v, i) { return v + ((i * 7 + 3) % 11 - 5) * 0.08; }
+
+function buildBubbleChart() {
+  var dk = matchMedia('(prefers-color-scheme:dark)').matches;
+  var tip = document.getElementById('tip');
+  var byDisc = {};
+  profs.forEach(function(p) { if (!byDisc[p.disc]) byDisc[p.disc] = []; byDisc[p.disc].push(p); });
+  var discKeys = Object.keys(byDisc);
+  var datasets = [];
+  for (var di = 0; di < discKeys.length; di++) {
+    var key = discKeys[di];
+    var dp = byDisc[key];
+    var sorted = dp.slice().sort(function(a, b) { return b.n - a.n; });
+    var data = [], bgColors = [], bdColors = [], bdWidths = [];
+    for (var j = 0; j < sorted.length; j++) {
+      var p = sorted[j];
+      data.push({x: jitter(p.q, j), y: jitter(p.abs, j+3), r: Math.max(5, Math.sqrt(p.n)*4), _p: p});
+      if (activeDiscs.has(p.disc)) {
+        bgColors.push(COLORS[p.disc] + (p.ideal > 0 ? 'CC' : '55'));
+        bdColors.push(p.ideal > 0 ? '#C8A951' : COLORS[p.disc] + '88');
+        bdWidths.push(p.ideal > 0 ? 2.5 : 0.8);
+      } else {
+        bgColors.push('rgba(128,128,128,.08)');
+        bdColors.push('rgba(128,128,128,.12)');
+        bdWidths.push(0.5);
+      }
+    }
+    datasets.push({label: key, data: data, backgroundColor: bgColors, borderColor: bdColors, borderWidth: bdWidths});
+  }
+  var quadPlugin = {
+    id: 'quads',
+    beforeDraw: function(chart) {
+      var ctx=chart.ctx, left=chart.chartArea.left, right=chart.chartArea.right, top=chart.chartArea.top, bottom=chart.chartArea.bottom;
+      var xm=chart.scales.x.getPixelForValue(2.5), ym=chart.scales.y.getPixelForValue(2.5);
+      var a=dk?0.12:0.06;
+      ctx.save();
+      [[left,top,xm-left,ym-top,'#3B7FCC'],[xm,top,right-xm,ym-top,'#2B9E7D'],[left,ym,xm-left,bottom-ym,'#AA2222'],[xm,ym,right-xm,bottom-ym,'#D97B2B']].forEach(function(q){ctx.fillStyle=q[4];ctx.globalAlpha=a;ctx.fillRect(q[0],q[1],q[2],q[3])});
+      ctx.globalAlpha=1;ctx.strokeStyle=dk?'rgba(255,255,255,.18)':'rgba(0,0,0,.13)';ctx.lineWidth=1;ctx.setLineDash([5,4]);
+      ctx.beginPath();ctx.moveTo(xm,top);ctx.lineTo(xm,bottom);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(left,ym);ctx.lineTo(right,ym);ctx.stroke();ctx.restore();
+    },
+    afterDraw: function(chart) {
+      var ctx=chart.ctx, left=chart.chartArea.left, right=chart.chartArea.right, top=chart.chartArea.top, bottom=chart.chartArea.bottom;
+      var xm=chart.scales.x.getPixelForValue(2.5), ym=chart.scales.y.getPixelForValue(2.5);
+      var tc=dk?'rgba(255,255,255,.5)':'rgba(0,0,0,.4)';
+      ctx.save();ctx.font='500 11px system-ui,sans-serif';ctx.fillStyle=tc;ctx.textAlign='center';
+      var rx2=xm+(right-xm)/2, lx2=left+(xm-left)/2;
+      ctx.fillText('Impacto disciplinar',lx2,top+16);ctx.fillText('sin incentivo ANID',lx2,top+30);
+      ctx.fillText('Alto reconocimiento disciplinar',rx2,top+16);ctx.fillText('+ alto IF (20 profesores, 36 papers, 14,8%)',rx2,top+30);
+      ctx.fillText('Bajo en ambos ejes',lx2,bottom-12);
+      ctx.fillText('Juego ANID: alto IF (JCR)',rx2,bottom-24);ctx.fillText('bajo reconocimiento disciplinar',rx2,bottom-10);
+      ctx.restore();
+    }
+  };
+  if (chart1) { chart1.destroy(); }
+  chart1 = new Chart(document.getElementById('ch'), {
+    type:'bubble', data:{datasets:datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false, animation:false,
+      layout:{padding:{top:8,right:12,bottom:8,left:8}},
+      plugins:{legend:{display:false},tooltip:{enabled:false,
+        external:function(context){
+          var tooltip=context.tooltip;
+          if(tooltip.opacity===0){tip.style.display='none';return}
+          var dp=tooltip.dataPoints; if(!dp||!dp[0]||!dp[0].raw)return;
+          var p=dp[0].raw._p; if(!p)return;
+          tip.innerHTML='<b>'+p.name+'</b><br><span style="font-size:.72rem">'+DISC_LABELS[p.disc]+'</span><br>Papers: <b>'+p.n+'</b> &middot; '+absL[p.abs]+' &middot; '+qL[p.q]+(p.ideal>0?'<br><span style="color:#C8A951;font-weight:600">'+p.ideal+' paper'+(p.ideal>1?'s':'')+' de alto impacto</span>':'')+'<br><span style="font-size:.72rem">'+p.subdis+'</span>';
+          var rect=context.chart.canvas.getBoundingClientRect();
+          var tx=rect.left+tooltip.caretX+14, ty=rect.top+tooltip.caretY-20;
+          if(tx+250>window.innerWidth)tx=rect.left+tooltip.caretX-250;
+          if(ty+120>window.innerHeight)ty=rect.top+tooltip.caretY-120;
+          if(ty<0)ty=8;
+          tip.style.left=tx+'px';tip.style.top=ty+'px';tip.style.display='block';
+        }
+      }},
+      scales:{
+        x:{min:-0.3,max:4.8,title:{display:true,text:'Mejor cuartil IF (JCR) del profesor',font:{size:12}},ticks:{stepSize:1,callback:function(v){return{0:'',1:'Q4',2:'Q3',3:'Q2',4:'Q1'}[Math.round(v)]||''}},grid:{color:'rgba(128,128,128,.08)'}},
+        y:{min:-0.5,max:5.8,title:{display:true,text:'Mejor rating ABS del profesor',font:{size:12}},ticks:{stepSize:1,callback:function(v){return{0:'Fuera ABS',1:'ABS 1',2:'ABS 2',3:'ABS 3',4:'ABS 4',5:'ABS 4\u2605'}[Math.round(v)]||''}},grid:{color:'rgba(128,128,128,.08)'}}
+      }
+    },
+    plugins:[quadPlugin]
+  });
+}
+
+function buildTable() {
+  var filtered=profs.filter(function(p){return activeDiscs.has(p.disc)});
+  filtered.sort(function(a,b){var va=a[sortCol],vb=b[sortCol];if(typeof va==='string')return sortDir*va.localeCompare(vb);return sortDir*(va-vb)});
+  var BADGE={ECON_GP:'b-econ',ADM_NI_INN:'b-adm',CON_FIN_TRI:'b-con',AD_MKT_TUR:'b-mkt'};
+  var html='';
+  for(var i=0;i<filtered.length;i++){
+    var p=filtered[i], barW=Math.min(100,p.pctIdeal);
+    var barColor=p.pctIdeal>=20?'#27ae60':p.pctIdeal>=10?'#f39c12':'#ccc';
+    html+='<tr><td style="font-weight:500">'+(p.ideal>0?'<span class="ideal-dot"></span>':'')+p.name+'</td><td><span class="badge '+BADGE[p.disc]+'">'+p.disc.replace(/_/g,' ')+'</span></td><td style="text-align:center;font-weight:600">'+p.n+'</td><td style="text-align:center;font-weight:600;color:'+(p.ideal>0?'var(--gold)':'var(--text3)')+'">'+(p.ideal||'\u2014')+'</td><td style="text-align:center">'+absL[p.abs]+'</td><td style="text-align:center">'+qL[p.q]+'</td><td style="text-align:center;white-space:nowrap">'+p.pctIdeal+'%<span class="bar-bg"><span class="bar-fg" style="width:'+barW+'%;background:'+barColor+'"></span></span></td><td style="font-size:.78rem;color:var(--text2)">'+p.subdis+'</td></tr>';
+  }
+  document.getElementById('tbody').innerHTML=html;
+}
+
+function buildDisciplineCharts() {
+  var discs=['ECON_GP','ADM_NI_INN','CON_FIN_TRI','AD_MKT_TUR'];
+  var discData=discs.map(function(d){var dp=profs.filter(function(p){return p.disc===d});return{papers:dp.reduce(function(s,p){return s+p.n},0),ideal:dp.reduce(function(s,p){return s+p.ideal},0)};});
+  new Chart(document.getElementById('ch2'),{type:'bar',data:{labels:discs.map(function(d){return DISC_LABELS[d]}),datasets:[{label:'Papers totales',data:discData.map(function(d){return d.papers}),backgroundColor:discs.map(function(d){return COLORS[d]+'88'}),borderColor:discs.map(function(d){return COLORS[d]}),borderWidth:1},{label:'Alto impacto',data:discData.map(function(d){return d.ideal}),backgroundColor:'rgba(200,169,81,.7)',borderColor:'#C8A951',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:11},usePointStyle:true,pointStyle:'rect'}}},scales:{y:{beginAtZero:true,title:{display:true,text:'Numero de papers'}},x:{ticks:{font:{size:11}}}}}});
+  var pctData=[23.9,4.0,21.6,16.7];
+  new Chart(document.getElementById('ch3'),{type:'bar',data:{labels:discs.map(function(d){return DISC_LABELS[d]}),datasets:[{label:'% Alto impacto',data:pctData,backgroundColor:pctData.map(function(v){return v>=20?'rgba(39,174,96,.7)':v>=10?'rgba(243,156,18,.7)':'rgba(192,57,43,.7)'}),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.parsed.x+'%'}}}},scales:{x:{beginAtZero:true,max:30,title:{display:true,text:'% papers de alto impacto'},ticks:{callback:function(v){return v+'%'}}},y:{ticks:{font:{size:12}}}}}});
+}
+
+function initDashboard() {
+  buildFilters('discFilter', function() { buildBubbleChart(); });
+  buildFilters('discFilter2', function() { buildTable(); });
+  buildBubbleChart();
+  buildTable();
+  document.querySelectorAll('#profTable th').forEach(function(th) {
+    th.addEventListener('click', function() {
+      var col=th.dataset.col;
+      if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1}
+      document.querySelectorAll('#profTable th').forEach(function(t){t.classList.remove('sorted')});
+      th.classList.add('sorted');
+      buildTable();
+    });
+  });
+}
+
+document.addEventListener('mousemove',function(e){
+  var tip=document.getElementById('tip');
+  if(tip.style.display==='block'){
+    var tx=e.clientX+14,ty=e.clientY-20;
+    if(tx+250>window.innerWidth)tx=e.clientX-250;
+    if(ty+120>window.innerHeight)ty=e.clientY-120;
+    if(ty<0)ty=8;
+    tip.style.left=tx+'px';tip.style.top=ty+'px';
+  }
+});
+</script>
+</body>
+</html>
