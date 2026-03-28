@@ -100,14 +100,14 @@ tr.prof-row{cursor:pointer}tr.prof-row:hover td{background:rgba(128,128,128,.05)
   <button class="tab" onclick="showPanel(2)">Por disciplina</button>
 </div>
 <div class="panel active" id="p0">
-<p class="subtitle" style="margin-bottom:8px">Cada burbuja = 1 profesor. Tamaño = nº papers. Borde dorado = tiene papers de alto impacto. Borde punteado = más de ⅓ de sus papers en revistas cuestionadas.</p>
+<p class="subtitle" style="margin-bottom:8px">Cada burbuja = 1 profesor. Tamaño = nº papers. Borde dorado = tiene papers de alto impacto. </p>
 <div class="legend">
   <span><span class="dot" style="background:#3266ad"></span>ECON_GP</span>
   <span><span class="dot" style="background:#d4537e"></span>ADM_NI_INN</span>
   <span><span class="dot" style="background:#1d9e75"></span>CON_FIN_TRI</span>
   <span><span class="dot" style="background:#d85a30"></span>AD_MKT_TUR</span>
   <span><span class="sq"></span>Con alto impacto</span>
-  <span><span class="dashed"></span>> ⅓ en rev. cuestionadas</span>
+  
 </div>
 <div class="filters" id="discFilter"></div>
 <div class="chart-wrap"><canvas id="ch"></canvas></div>
@@ -155,7 +155,7 @@ var profs,activeDiscs,sortCol='ideal',sortDir=-1,chart1=null;
 
 function showPanel(i){document.querySelectorAll('.tab').forEach(function(t,j){t.classList.toggle('active',j===i)});document.querySelectorAll('.panel').forEach(function(p,j){p.classList.toggle('active',j===i)});if(i===2&&!window._ch2Done){buildDisciplineCharts();window._ch2Done=true}}
 function buildFilters(cid,onChange){var c=document.getElementById(cid);c.innerHTML='<button class="fbtn on" data-d="ALL">Todas</button>';Object.keys(DISC_LABELS).forEach(function(di){c.innerHTML+='<button class="fbtn on" data-d="'+di+'" style="border-color:'+COLORS[di]+'">'+DISC_LABELS[di]+'</button>'});c.querySelectorAll('.fbtn').forEach(function(b){b.addEventListener('click',function(){var d=b.dataset.d;if(d==='ALL'){activeDiscs=new Set(Object.keys(COLORS));c.querySelectorAll('.fbtn').forEach(function(x){x.classList.add('on')})}else{if(activeDiscs.size===4){activeDiscs=new Set([d]);c.querySelectorAll('.fbtn').forEach(function(x){x.classList.toggle('on',x.dataset.d===d)});c.querySelector('[data-d="ALL"]').classList.remove('on')}else if(activeDiscs.has(d)){activeDiscs.delete(d);b.classList.remove('on')}else{activeDiscs.add(d);b.classList.add('on')}if(activeDiscs.size===4)c.querySelector('[data-d="ALL"]').classList.add('on');else c.querySelector('[data-d="ALL"]').classList.remove('on')}onChange()})})}
-function jitter(v,i){return v+((i*7+3)%11-5)*0.08}
+function jitter(v,i){return v+((i*7+3)%13-6)*0.12}
 
 function buildBubbleChart(){var dk=matchMedia('(prefers-color-scheme:dark)').matches;var tip=document.getElementById('tip');var byDisc={};profs.forEach(function(p){if(!byDisc[p.disc])byDisc[p.disc]=[];byDisc[p.disc].push(p)});var datasets=[];Object.keys(byDisc).forEach(function(key){var dp=byDisc[key].slice().sort(function(a,b){return b.n-a.n});var data=[],bg=[],bd=[],bw=[];dp.forEach(function(p,j){var sz=Math.max(5,Math.sqrt(Math.max(p.n,1))*4);data.push({x:jitter(p.q,j),y:jitter(p.abs,j+3),r:sz,_p:p});if(activeDiscs.has(p.disc)){bg.push(COLORS[p.disc]+(p.ideal>0?'CC':'55'));bd.push(p.ideal>0?'#C8A951':COLORS[p.disc]+'88');bw.push(p.ideal>0?2.5:0.8)}else{bg.push('rgba(128,128,128,.08)');bd.push('rgba(128,128,128,.12)');bw.push(0.5)}});datasets.push({label:key,data:data,backgroundColor:bg,borderColor:bd,borderWidth:bw})});
 
