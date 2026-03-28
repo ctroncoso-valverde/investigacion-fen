@@ -70,6 +70,10 @@ tr.prof-row{cursor:pointer}tr.prof-row:hover td{background:rgba(128,128,128,.05)
 @media(prefers-color-scheme:dark){.pill-q1{background:#08352a;color:#7dd4b5}.pill-q2{background:#0a3562;color:#85b7eb}.pill-q3{background:#3a2a08;color:#d4a03a}.pill-q4{background:#2a2a28;color:#999}}
 .hi-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--gold);margin-right:5px;flex-shrink:0;margin-top:4px}
 .cnt{font-size:.72rem;color:var(--text3);margin-left:4px}
+.efic-wrap{display:flex;align-items:center;gap:6px;min-width:80px}
+.efic-pct{font-size:.75rem;font-weight:500;min-width:28px;text-align:right}
+.efic-bar{height:8px;border-radius:4px;flex:1;max-width:60px;background:var(--border)}
+.efic-fill{height:100%;border-radius:4px}
 </style>
 </head>
 <body>
@@ -99,7 +103,8 @@ tr.prof-row{cursor:pointer}tr.prof-row:hover td{background:rgba(128,128,128,.05)
   <button class="tab" onclick="showPanel(2)">Por disciplina</button>
 </div>
 <div class="panel active" id="p0">
-<p class="subtitle" style="margin-bottom:8px">Cada burbuja = 1 profesor. Tamaño = nº papers. Borde dorado = tiene papers de alto impacto (ABS ≥ 3 y JCR Q1/Q2).</p>
+<p style="font-size:1.1rem;font-weight:600;margin-bottom:4px">Producción FEN 2020–2026: 234 papers, 48 académicos activos</p>
+<p class="subtitle" style="margin-bottom:8px">Cada burbuja = 1 profesor. Tamaño = nº papers. Borde dorado = tiene papers de alto impacto (ABS 3+ y Q1/Q2).</p>
 <div class="legend">
   <span><span class="dot" style="background:#3266ad"></span>ECON_GP</span>
   <span><span class="dot" style="background:#d4537e"></span>ADM_NI_INN</span>
@@ -109,6 +114,7 @@ tr.prof-row{cursor:pointer}tr.prof-row:hover td{background:rgba(128,128,128,.05)
 </div>
 <div class="filters" id="discFilter"></div>
 <div class="chart-wrap"><canvas id="ch"></canvas></div>
+<p class="note">Los restantes académicos sin producción WOS/Scopus en el período no aparecen graficados.</p>
 <p class="note">Criterio alto impacto: ABS ≥ 3 (AJG 2024) AND Q1/Q2 JCR (Clarivate). Ambas condiciones simultáneas.</p>
 </div>
 <div class="panel" id="p1">
@@ -123,6 +129,7 @@ tr.prof-row{cursor:pointer}tr.prof-row:hover td{background:rgba(128,128,128,.05)
   <th data-col="ideal">Alto imp. <span class="arrow">&#9650;</span></th>
   <th data-col="abs">Mejor ABS <span class="arrow">&#9650;</span></th>
   <th data-col="q">Mejor IF <span class="arrow">&#9650;</span></th>
+  <th data-col="efic">% Efic. <span class="arrow">&#9650;</span></th>
   <th data-col="subdis">Sub-disciplina <span class="arrow">&#9650;</span></th>
 </tr></thead><tbody id="tbody"></tbody></table>
 </div></div>
@@ -168,12 +175,12 @@ var BADGE={ECON_GP:'b-econ',ADM_NI_INN:'b-adm',CON_FIN_TRI:'b-con',AD_MKT_TUR:'b
 var QCLS={Q1:'pill-q1',Q2:'pill-q2',Q3:'pill-q3',Q4:'pill-q4'};
 var html='';
 filtered.forEach(function(p,i){
-html+='<tr class="prof-row" data-idx="'+i+'"><td><span class="chevron" id="chev'+i+'">&#9654;</span></td><td style="font-weight:500">'+(p.ideal>0?'<span class="ideal-dot"></span>':'')+p.name+'<span class="cnt">('+p.n+')</span></td><td><span class="badge '+BADGE[p.disc]+'">'+p.disc.replace(/_/g,' ')+'</span></td><td style="text-align:center;font-weight:600">'+p.n+'</td><td style="text-align:center;font-weight:600;color:'+(p.ideal>0?'var(--gold)':'var(--text3)')+'">'+( p.ideal||'\u2014')+'</td><td style="text-align:center">'+absL[p.abs]+'</td><td style="text-align:center">'+qL[p.q]+'</td><td style="font-size:.78rem;color:var(--text2)">'+p.subdis+'</td></tr>';
+html+='<tr class="prof-row" data-idx="'+i+'"><td><span class="chevron" id="chev'+i+'">&#9654;</span></td><td style="font-weight:500">'+(p.ideal>0?'<span class="ideal-dot"></span>':'')+p.name+'<span class="cnt">('+p.n+')</span></td><td><span class="badge '+BADGE[p.disc]+'">'+p.disc.replace(/_/g,' ')+'</span></td><td style="text-align:center;font-weight:600">'+p.n+'</td><td style="text-align:center;font-weight:600;color:'+(p.ideal>0?'var(--gold)':'var(--text3)')+'">'+( p.ideal||'\u2014')+'</td><td style="text-align:center">'+absL[p.abs]+'</td><td style="text-align:center">'+qL[p.q]+'</td><td>'+(function(){var pct=p.n>0?Math.round(p.ideal/p.n*100):0;var col=pct>=20?'#27ae60':pct>=10?'#f39c12':'#c0392b';return '<div class="efic-wrap"><span class="efic-pct">'+pct+'%</span><div class="efic-bar"><div class="efic-fill" style="width:'+Math.min(pct*2,100)+'%;background:'+col+'"></div></div></div>'})()+'</td><td style="font-size:.78rem;color:var(--text2)">'+p.subdis+'</td></tr>';
 var ph='';
 p.papers.forEach(function(pp){var qcls=QCLS[pp.q]||'pill-q4';
 var titleHtml=pp.doi?'<a href="'+pp.doi+'" target="_blank" rel="noopener">'+pp.t+'</a>':pp.t;
 ph+='<div class="paper">'+(pp.hi?'<span class="hi-dot"></span>':'<span style="width:7px;margin-right:5px;flex-shrink:0"></span>')+'<span class="p-year">'+pp.y+'</span><span class="p-title">'+titleHtml+'</span><span class="p-journal">'+pp.j+(pp.q?'<span class="pill '+qcls+'">'+pp.q+'</span>':'')+'</span></div>'});
-html+='<tr class="papers-row" id="papers'+i+'"><td colspan="8"><div class="papers-wrap">'+ph+'</div></td></tr>'});
+html+='<tr class="papers-row" id="papers'+i+'"><td colspan="9"><div class="papers-wrap">'+ph+'</div></td></tr>'});
 document.getElementById('tbody').innerHTML=html;
 document.querySelectorAll('.prof-row').forEach(function(row){row.addEventListener('click',function(){var idx=row.dataset.idx;var pr=document.getElementById('papers'+idx);var ch=document.getElementById('chev'+idx);var isOpen=pr.classList.contains('open');document.querySelectorAll('.papers-row').forEach(function(r){r.classList.remove('open')});document.querySelectorAll('.chevron').forEach(function(c){c.classList.remove('open')});if(!isOpen){pr.classList.add('open');ch.classList.add('open')}})})}
 
@@ -185,7 +192,7 @@ new Chart(document.getElementById('ch3'),{type:'bar',data:{labels:discs.map(func
 function initDashboard(){
 profs=window._DATA.map(function(r){
   var allPapers=r[7].map(function(pp){return{y:pp[0],t:pp[1],j:pp[2],q:pp[3],doi:pp[4],hi:pp[5]===1,pred:pp[6]===1}});
-  return{name:r[0],disc:r[1],n:r[2],ideal:r[3],abs:r[4],q:r[5],subdis:r[6],papers:allPapers,dashed:r[8]===1}
+  var nn=r[2],ii=r[3];return{name:r[0],disc:r[1],n:nn,ideal:ii,abs:r[4],q:r[5],subdis:r[6],papers:allPapers,dashed:r[8]===1,efic:nn>0?Math.round(ii/nn*100):0}
 });
 activeDiscs=new Set(Object.keys(COLORS));
 buildFilters('discFilter',function(){buildBubbleChart()});
