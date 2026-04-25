@@ -5,12 +5,19 @@
 *.docx
 *.pdf
 *.rtf
-*.md
+
+# Archivos markdown de trabajo (excepto README del repo)
+PROMPT_*.md
+Incorporaciones*.md
 
 # Versiones antiguas y de desarrollo del dashboard
 index_old*.html
 diagnostico_produccion_fen.html
 diagnostico_produccion_fen_encrypted.html
 
+# Mocks de desarrollo
+*_mock.html
+
 # Carpetas auxiliares
 gh-pages/
+_backups/
