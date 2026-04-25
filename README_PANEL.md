@@ -153,13 +153,7 @@ Abre en el navegador:
 https://ctroncoso-valverde.github.io/investigacion-fen/panel_investigacion.html
 ```
 
-La pantalla de login es **idéntica** a la del dashboard — no hay ninguna pista visible de que existe un modo admin. Ingresa el RUT del administrador seguido de `_adm`:
-
-```
-12963640-8_adm
-```
-
-Cualquier otro RUT con `_adm` es rechazado. El sufijo `_adm` no tiene efecto para nadie más.
+La pantalla de login es **idéntica** a la del dashboard — no hay ninguna pista visible de que existe un modo admin. 
 
 ### Qué puedes hacer desde el panel
 
