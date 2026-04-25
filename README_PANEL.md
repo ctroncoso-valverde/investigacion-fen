@@ -270,7 +270,7 @@ Los archivos marcados como `[solo local]` están en `.gitignore` y nunca se sube
 
 ### "RUT no autorizado" al intentar entrar al panel
 
-Verifica que estás escribiendo exactamente `12963640-8_adm` — con guión antes del dígito verificador, sin puntos, y con el sufijo `_adm` al final. El campo es sensible a mayúsculas: el dígito verificador `K` debe ir en minúscula (`k`).
+Verifica que estás escribiendo correctamente el clogin para este panel. 
 
 ### El panel no genera los archivos
 
@@ -291,11 +291,6 @@ git add index.html
 git commit -m "Restaurar versión anterior"
 git push origin main
 ```
-
-### Perdí acceso al panel (no recuerdo el RUT admin)
-
-El RUT del administrador es `12963640-8`. El acceso al panel usa ese RUT seguido de `_adm`. Si se necesita cambiar el administrador, hay que regenerar el panel desde un chat con Claude en el proyecto `iSER AACSB`, decrifrando uno de los vaults actuales y creando uno nuevo para el nuevo RUT admin.
-
 ---
 
 ## 10. Contexto del proyecto
