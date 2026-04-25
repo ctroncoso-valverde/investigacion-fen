@@ -12,7 +12,7 @@ El sistema consiste en dos páginas web alojadas en GitHub Pages (el servicio gr
 | URL | Descripción |
 |-----|-------------|
 | `https://ctroncoso-valverde.github.io/investigacion-fen/` | Dashboard de producción académica FEN UNAB 2020–2026. Solo accesible con RUT autorizado. |
-| `https://ctroncoso-valverde.github.io/investigacion-fen/panel_investigacion.html` | Panel de administración. Solo accesible con el RUT del administrador más el sufijo `_adm`. |
+| `https://ctroncoso-valverde.github.io/investigacion-fen/panel_investigacion.html` | Panel de administración. |
 
 Ambos son archivos HTML estáticos — no hay servidor, no hay base de datos, no hay backend. Todo el procesamiento ocurre en el navegador del usuario. Los datos están **encriptados dentro del propio HTML** con AES-256-GCM.
 
