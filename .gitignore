@@ -1,1 +1,16 @@
 .DS_Store
+
+# Archivos de trabajo (no se publican en GitHub Pages)
+*.xlsx
+*.docx
+*.pdf
+*.rtf
+*.md
+
+# Versiones antiguas y de desarrollo del dashboard
+index_old*.html
+diagnostico_produccion_fen.html
+diagnostico_produccion_fen_encrypted.html
+
+# Carpetas auxiliares
+gh-pages/
