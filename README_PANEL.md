@@ -142,28 +142,7 @@ Usuario escribe su RUT
 → Si no existe: "RUT no autorizado"
 ```
 
-### Usuarios autorizados (16 en total, abril 2026)
 
-| Nombre | RUT |
-|--------|-----|
-| Juan Pablo Torres (Decano) | 15637190-4 |
-| Cristián Troncoso | 12963640-8 |
-| Mauricio Donoso | 7813721-5 |
-| Andrés Tolosa | 12251408-0 |
-| María Elena Arzola | 13434206-4 |
-| Roberto Carvajal | 10602973-3 |
-| Mary-Ann Cooper | 15098716-4 |
-| Luciana Mitjavila | 23146826-9 |
-| Nicolás Garrido | 21821504-1 |
-| Freddy Coronado | 12484626-9 |
-| Luis Felipe Vergara | 10797459-8 |
-| María Pía Monreal | 9572813-8 |
-| Florencia Flen | 18638522-5 |
-| Patricio Aroca | 8144337-8 |
-| Jesús Juyumaya | 16105835-1 |
-| Carlos Alsúa | 24036773-4 |
-
----
 
 ## 5. Panel de administración
 
